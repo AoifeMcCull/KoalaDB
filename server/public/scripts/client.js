@@ -1,7 +1,4 @@
 console.log( 'js' );
-getKoalas();
-
-
 
 function getKoalas() {
 
@@ -11,10 +8,11 @@ function getKoalas() {
   })
 
   .then((response) => {
+    console.log("response:", response)
     let koalaData = response.data;
     console.log('This is the koala data we GET from server:', koalaData);
 
-    displayKoalas(koalaData);
+    renderKoalas(koalaData);
   })
 
   .catch((err) => {
@@ -23,51 +21,6 @@ function getKoalas() {
 
 } // end of get
 
-
-
-// HTML
-
-function displayKoalas(data) {
-  console.log('This is the data to be displayed. Is this correct?:', data);
-  let viewKoalas = document.getElementById('viewKoalas');
-
-  viewKoalas.innerHTML = '';
-  for(let koala of data) {
-
-    console.log(`Is ${koala.name} ready to transfer? ${koala.ready_to_transfer}`);
-    if(koala.ready_to_transfer === true) {
-      viewKoalas.innerHTML += `
-
-      <tr>
-        <td>${koala.name}</td>
-        <td>${koala.age}</td>
-        <td>${koala.favorite_color}</td>
-        <td>${koala.ready_to_transfer}</td>
-        <td>${koala.notes}</td>
-        <td></td>
-        <td><button onClick="deleteKoala(${koala.id})">Delete</button></td>
-      </tr>`;
-    
-    } else {
-      viewKoalas.innerHTML += `
-
-      <tr>
-        <td>${koala.name}</td>
-        <td>${koala.age}</td>
-        <td>${koala.favorite_color}</td>
-        <td>${koala.ready_to_transfer}</td>
-        <td>${koala.notes}</td>
-        <td><button onClick="readyKoala(${koala.id})">Ready for Transfer</button></td>
-        <td><button onClick="deleteKoala(${koala.id})">Delete</button></td>
-      </tr>`;
-
-    } 
-    
-  } 
-} 
-
-
-// DELETE 
 
 function deleteKoala(koalaId) {
   console.log('Koala id in client:', koalaId);
@@ -89,6 +42,42 @@ function deleteKoala(koalaId) {
   })
 }
 
+function addKoala (event){
+  event.preventDefault();
+  console.log("Submit Button Clicked");
+  let name = document.getElementById('nameIn').value;
+  let age = document.getElementById('ageIn').value;
+  let color = document.getElementById('colorIn').value;
+  let readyForTransfer = document.getElementById('readyForTransferIn').value;
+  let notes = document.getElementById('notesIn').value;
+  console.log("Variables Match:", name, age, color, readyForTransfer,notes);
+
+  let incomingKoala = {
+    name: name,
+    favorite_color: color,
+    age: age,
+    ready_to_transfer:readyForTransfer,
+    notes: notes
+  }
+  saveKoala(incomingKoala)
+}
+function saveKoala(koala){
+  console.log( 'in saveKoala' );
+  // axios call to server to save koala
+  axios({
+    method: "POST",
+      url: "/koalas",
+      data: koala,
+    })
+    .then(function (response) {
+      console.log("saveKoala()", response.data);
+      getKoalas();
+    })
+    .catch(function (error) {
+      console.log("Error in POST", error);
+      alert("Unable to save koala")
+    });
+}
 
 
 // Transfer Update
@@ -106,49 +95,36 @@ function readyKoala(koala_id) {
   })
 }
 
-
-
-
-
-function addKoala (event){
-  event.preventDefault();
-  console.log("Submit Button Clicked");
-  let name = document.getElementById('nameIn').value;
-  let age = document.getElementById('ageIn').value;
-  let color = document.getElementById('colorIn').value;
-  let readyForTransfer = document.getElementById('readyForTransferIn').value;
-  let notes = document.getElementById('notesIn').value;
-  console.log("Variables Match:", name, age, color, readyForTransfer,notes);
-
-let incomingKoalas = {
-  name: name,
-  favorite_color: color,
-  age: age,
-  ready_to_transfer:readyForTransfer,
-  notes: notes
+function renderKoalas(koalaArray){
+  console.log(koalaArray)
+  let ktable = document.getElementById("viewKoalas");
+  ktable.innerHTML = '';
+  for(let koala of koalaArray){
+    ktable.innerHTML += buildRow(koala)
+  }
 }
 
-  
-
-  console.log("incomingObject:", incomingKoalas);
-
-  
-
-  axios({
-    method: 'POST',
-    url: '/koalas',
-    data: incomingKoalas
-  }).then(function(response) {
-    console.log(response.data);
-    document.getElementById('form').reset();
-
-  }).catch(function(error) {
-    console.log('error in KoalasPOST', error); 
-    alert('Error adding koala object. Please try again later.')       
-  });
-
-
+function buildRow(koala){
+  let protoString = `
+  <td>${koala.name}</td>
+  <td>${koala.favorite_color}</td>
+  <td>${koala.age}</td>
+  <td>${koala.ready_to_transfer}</td>
+  <td>${koala.notes}</td>
+`
+return processTransfer(koala, protoString)
+}
+function processTransfer(koala, protoString){
+  let returnString;
+  let transferButton = ''
+  if(!(koala.ready_to_transfer)){ 
+    transferButton = `<button onClick = readyKoala(${koala.id})>Ready for Transfer</button>` //transfer button only appears if not already marked
+  }
+  returnString = `${protoString}
+  <td>${transferButton}</td> `
+//returnString is now protoString, with a remove button if necessary, and a delete button
+  return returnString;
 }
 
 
-
+getKoalas();

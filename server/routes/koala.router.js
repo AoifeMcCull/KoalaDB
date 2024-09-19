@@ -4,10 +4,11 @@ const koalaRouter = express.Router();
 
 const pool = require('../modules/pool');
 // GET
-router.get('/', (req, res) => {
-    let queryText = 'SELECT * FROM "koala_info";';
+koalaRouter.get('/', (req, res) => {
+  console.log("request:", req)
+    let queryText = 'SELECT * FROM "koalas";';
     pool.query(queryText).then(result => {
-    
+      console.log("sending:", result.rows)
       res.send(result.rows);
     }) 
       .catch(error => {
@@ -18,14 +19,14 @@ router.get('/', (req, res) => {
 
 
 // POST
-router.post('/', (req, res) => {
+koalaRouter.post('/', (req, res) => {
     let newKoala = req.body;
     console.log(`Adding Koala`, newKoala);
   
 
-    let queryText = `INSERT INTO "koala_info" ("name", "favorite_color","age","transfer", "notes")
+    let queryText = `INSERT INTO "koalas" ("name", "favorite_color","age","ready_to_transfer", "notes")
                      VALUES ($1, $2, $3, $4, $5);`;
-    pool.query(queryText, [newKoala.name, newKoala.favorite_color, newKoala.age, newKoala.transfer, newKoala.notes])
+    pool.query(queryText, [newKoala.name, newKoala.favorite_color, newKoala.age, newKoala.ready_to_transfer, newKoala.notes])
       .then(result => {
         res.sendStatus(201);
       })
@@ -36,16 +37,15 @@ router.post('/', (req, res) => {
   });
 
 // PUT
-router.put('/:id', (req, res) => {
+koalaRouter.put('/:id', (req, res) => {
 
     let koalaId = req.params.id;
-    let transfer  = req.body.transfer;
   
     let queryText = `
-    UPDATE "koala_info" SET "transfer"= NOT "transfer"
+    UPDATE "koalas" SET "ready_to_transfer"= true
     WHERE "id"= $1;
 `
-    console.log("Change ready for transfer: ", koalaId, transfer)
+    console.log("marked ready for transfer: ", koalaId,)
 
 
     pool.query(queryText, [koalaId])
@@ -59,5 +59,7 @@ router.put('/:id', (req, res) => {
   })
 
 // DELETE
+//stretch goal
+
 
 module.exports = koalaRouter;
